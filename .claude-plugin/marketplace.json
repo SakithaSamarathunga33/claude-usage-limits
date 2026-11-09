@@ -1,0 +1,11 @@
+{
+  "name": "claude-usage-limits",
+  "owner": { "name": "SakithaSamarathunga33" },
+  "plugins": [
+    {
+      "name": "usage-limits",
+      "source": "./",
+      "description": "Shows how much of the 5-hour session limit and the weekly limit is used, as bars above the prompt and via /limits"
+    }
+  ]
+}
