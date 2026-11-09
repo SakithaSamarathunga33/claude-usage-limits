@@ -52,9 +52,18 @@ async function showCurrent($: EngineInterface) {
   await show($, await currentLimits($))
 }
 
+async function showSaved($: EngineInterface) {
+  await show($, await savedLimits($))
+}
+
+/** A reload keeps the reading, which can be newer than the saved one. */
+async function showSavedIfEmpty($: EngineInterface) {
+  if ((await read($, reading)) === null) await showSaved($)
+}
+
 async function showAndSave($: EngineInterface, limits: readonly SessionRateLimit[]) {
   if (limits.length === 0) {
-    await show($, await savedLimits($))
+    await showSaved($)
 
     return
   }
@@ -85,6 +94,9 @@ async function setUp($: EngineInterface) {
 
 export const register: Register = on => {
   on('session.start', async ($, e, next) => {
+    // The saved figures need nothing from the engine, so they don't wait for it to finish starting.
+    await showSavedIfEmpty($).catch((error: unknown) => logFailure($, 'saved reading', error))
+
     const result = await next(e)
 
     refresh?.cancel()
@@ -106,7 +118,9 @@ export const register: Register = on => {
     if ((e.surface !== 'vscode' && e.surface !== 'desktop') || e.props.hasSurvey) return next(e)
 
     const current = await read($, reading)
-    const meters = current === null ? [] : toMeters(current.limits, await $.clock.now())
+    // The engine can draw at plugin load, before session.start has filled the reading.
+    const limits = current?.limits ?? (await savedLimits($))
+    const meters = toMeters(limits, await $.clock.now())
 
     if (meters.length === 0) return next(e)
 

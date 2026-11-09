@@ -1,3 +1,5 @@
+![claude-usage-limits, a Claude Code plugin that tracks your Claude plan usage with progress bars and reset timers](docs/cover.png)
+
 # Claude usage limits
 
 See how much of your Claude plan you have used without leaving Claude Code. This plugin shows your **5-hour session limit** and your **weekly limit** as progress bars right above the prompt box, with the time left until each one resets.

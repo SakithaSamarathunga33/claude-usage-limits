@@ -89,10 +89,15 @@ const engine = (
   limits: SessionRateLimit[],
   stored: Record<string, unknown> = {},
   surfaces: readonly ('vscode' | 'terminal')[] = ['vscode'],
+  onEngineStart: () => void = () => {},
 ) => {
   const clock = mock.clock(on, { now: NOW })
   mock.store(on, stored)
-  on('session.start', (_, e) => ({ cwd: e.cwd }))
+  on('session.start', (_, e) => {
+    onEngineStart()
+
+    return { cwd: e.cwd }
+  })
   on('session.measure', (_, e) => ({ changed: e.changed }))
   on('command.register', () => ({ value: { command: 'limits' } }))
   on('session.surfaces', () => ({ value: surfaces }))
@@ -163,6 +168,26 @@ describe('the band above the prompt', () => {
       await ui.unmount()
     })
   }
+
+  test('the first draw shows the saved reading before the session has started', async ($, on) => {
+    engine(on, [], [], { lastRateLimits: LIMITS })
+    engineDraws(on)
+
+    const ui = await $.ui.mount({ ...BAND, surface: 'vscode' })
+
+    expect(await ui.find({ type: 'Text', text: '42.5%' })).toBeDefined()
+    await ui.unmount()
+  })
+
+  test('a saved value of the wrong shape draws nothing on the first draw', async ($, on) => {
+    engine(on, [], [], { lastRateLimits: [{ kind: 5 }] })
+    engineDraws(on)
+
+    const ui = await $.ui.mount({ ...BAND, surface: 'vscode' })
+
+    expect(await ui.find({ type: 'Svg' })).toBeUndefined()
+    await ui.unmount()
+  })
 
   test('a window past its reset says so instead of a stale figure', async ($, on) => {
     engine(on, [], [{ kind: 'five_hour', percentUsed: 91, resetsAt: at(-MINUTE) }])
@@ -317,6 +342,29 @@ describe('the mod', () => {
     await $.session.start({ cwd: '/other-project', surface: 'vscode', isInteractive: true })
 
     expect(statuses.at(-1)).toMatch(/^5h .* 42\.5% .*Week .* 18%/)
+  })
+
+  test('the saved reading is up before the engine finishes starting', async ($, on) => {
+    const statuses: (string | undefined)[] = []
+    const seenAtEngineStart: (string | undefined)[] = []
+    engine(on, statuses, [], { lastRateLimits: LIMITS }, ['vscode'], () =>
+      seenAtEngineStart.push(statuses.at(-1)),
+    )
+
+    await $.session.start({ cwd: '/', surface: 'vscode', isInteractive: true })
+
+    expect(seenAtEngineStart[0]).toMatch(/^5h .* 42\.5% /)
+  })
+
+  test('a reload keeps a live reading that was never saved', async ($, on) => {
+    const statuses: (string | undefined)[] = []
+    const seenAtEngineStart: (string | undefined)[] = []
+    engine(on, statuses, LIMITS, {}, ['vscode'], () => seenAtEngineStart.push(statuses.at(-1)))
+
+    await $.session.start({ cwd: '/', surface: 'vscode', isInteractive: true })
+    await $.session.start({ cwd: '/', surface: 'vscode', isInteractive: true })
+
+    expect(seenAtEngineStart[1]).toMatch(/^5h .* 42\.5% /)
   })
 
   test('a live reading wins over the saved one', async ($, on) => {
