@@ -83,6 +83,41 @@ describe('formatLimitsDetail', () => {
   })
 })
 
+const SETTINGS = '/home/me/.claude/plugins/usage-settings.json'
+const MUTED = '{"isChimeMuted": true}'
+
+/**
+ * A home folder in memory for the mute setting's file. `files` is the disk: a test that
+ * writes to it plays another session (the terminal) changing the setting.
+ */
+const fakeHome = (on: On, files: Map<string, string>) => {
+  // The engine makes a path absolute in the OS's own form (`D:\home\me\...` on Windows).
+  const onDisk = (path: string) => path.replaceAll('\\', '/').replace(/^[A-Za-z]:/, '')
+  mock.env(on, { HOME: '/home/me' })
+  on('fs.exists', (_, e) => ({ value: files.has(onDisk(e.path)) }))
+  on('fs.read', (_, e) => {
+    const text = files.get(onDisk(e.path))
+    if (text === undefined) throw new Error(`ENOENT: ${e.path}`)
+
+    return { value: text }
+  })
+  on('fs.write', (_, e) => {
+    files.set(onDisk(e.path), e.text)
+
+    return { value: undefined }
+  })
+}
+
+/** The store, with `isChimeMuted: true` meaning the settings file says muted. */
+const disk = (on: On, stored: Record<string, unknown>) => {
+  const { isChimeMuted, ...store } = stored
+  const files = new Map<string, string>(isChimeMuted === true ? [[SETTINGS, MUTED]] : [])
+  mock.store(on, store)
+  fakeHome(on, files)
+
+  return files
+}
+
 const engine = (
   on: On,
   statuses: (string | undefined)[],
@@ -92,7 +127,7 @@ const engine = (
   onEngineStart: () => void = () => {},
 ) => {
   const clock = mock.clock(on, { now: NOW })
-  mock.store(on, stored)
+  disk(on, stored)
   on('session.start', (_, e) => {
     onEngineStart()
 
@@ -125,6 +160,10 @@ const BAND = {
     view: {},
   },
 } as const
+
+/** The bell the band draws: the label of its Button, keyed `sound`. */
+const bellOf = async (ui: { find: (q: { key: string }) => Promise<{ props: Record<string, unknown> } | undefined> }) =>
+  (await ui.find({ key: 'sound' }))?.props.label
 
 const engineDraws = (on: On) =>
   on('ui.render', ($, e) => {
@@ -167,9 +206,7 @@ describe('the band above the prompt', () => {
       // The reset is short, so the row fits beside the bell.
       expect(await ui.find({ type: 'Text', text: '↻ 2h14m' })).toBeDefined()
       expect(await ui.find({ type: 'Text', text: '↻ 2d3h' })).toBeDefined()
-      expect(await ui.find({ type: 'Text', text: '\u{1F514}' })).toBeDefined()
-      // A plain icon: VS Code would draw a Button in its theme's button color.
-      expect(await ui.find({ type: 'Button' })).toBeUndefined()
+      expect(await bellOf(ui)).toBe('\u{1F514}')
       await ui.unmount()
     })
   }
@@ -189,9 +226,9 @@ describe('the band above the prompt', () => {
     const ui = await $.ui.mount({ ...BAND, surface: 'vscode' })
 
     expect((await limits(' Mute ')).text).toBe('Chime muted. Notifications still show.')
-    expect(await ui.find({ type: 'Text', text: '\u{1F515}' })).toBeDefined()
+    expect(await bellOf(ui)).toBe('\u{1F515}')
     expect((await limits('unmute')).text).toBe('Chime on.')
-    expect(await ui.find({ type: 'Text', text: '\u{1F514}' })).toBeDefined()
+    expect(await bellOf(ui)).toBe('\u{1F514}')
     expect((await limits('loud')).text).toMatch(/Unknown option "loud"/)
     await ui.unmount()
   })
@@ -202,7 +239,23 @@ describe('the band above the prompt', () => {
 
     const ui = await $.ui.mount({ ...BAND, surface: 'vscode' })
 
-    expect(await ui.find({ type: 'Text', text: '\u{1F515}' })).toBeDefined()
+    expect(await bellOf(ui)).toBe('\u{1F515}')
+    await ui.unmount()
+  })
+
+  test('clicking the bell mutes and unmutes the chime', async ($, on) => {
+    engine(on, [], LIMITS)
+    engineDraws(on)
+    const click = { key: 'sound' }
+
+    await $.session.start({ cwd: '/', surface: 'vscode', isInteractive: true })
+    const ui = await $.ui.mount({ ...BAND, surface: 'vscode' })
+
+    expect(await bellOf(ui)).toBe('\u{1F514}')
+    await ui.press(click)
+    expect(await bellOf(ui)).toBe('\u{1F515}')
+    await ui.press(click)
+    expect(await bellOf(ui)).toBe('\u{1F514}')
     await ui.unmount()
   })
 
@@ -481,8 +534,9 @@ describe('when a task finishes', () => {
   type Host = { hasPowerShell: boolean; hasChannel: boolean }
 
   const alerts = (on: On, host: Host, stored: Record<string, unknown> = {}) => {
-    mock.store(on, stored)
-    const seen = { scripts: [] as string[], notified: [] as string[], toasts: [] as string[], clips: [] as unknown[] }
+    const files = disk(on, stored)
+    const seen = {
+      files, scripts: [] as string[], notified: [] as string[], toasts: [] as string[], clips: [] as unknown[] }
     on('turn.complete', (_, e) => ({ text: e.answer }))
     on('process.run', (_, e) => {
       if (!host.hasPowerShell) throw new Error('powershell: not found')
@@ -552,6 +606,32 @@ describe('when a task finishes', () => {
 
     expect(seen.scripts.some(s => s.includes('.Show('))).toBe(true)
     expect(seen.scripts.some(s => s.includes('PlaySync'))).toBe(false)
+  })
+
+  test('a mute from another session (the terminal) silences this one', async ($, on) => {
+    const seen = alerts(on, { hasPowerShell: true, hasChannel: true })
+
+    seen.files.set(SETTINGS, MUTED)
+    await $.turn.complete(TURN)
+    await settle()
+
+    expect(seen.scripts.some(s => s.includes('PlaySync'))).toBe(false)
+
+    seen.files.set(SETTINGS, '{"isChimeMuted": false}')
+    await $.turn.complete(TURN)
+    await settle()
+
+    expect(seen.scripts.some(s => s.includes('PlaySync'))).toBe(true)
+  })
+
+  test('a settings file that is not JSON leaves the chime on', async ($, on) => {
+    const seen = alerts(on, { hasPowerShell: true, hasChannel: true })
+
+    seen.files.set(SETTINGS, 'not json')
+    await $.turn.complete(TURN)
+    await settle()
+
+    expect(seen.scripts.some(s => s.includes('PlaySync'))).toBe(true)
   })
 
   test('stays quiet for subagents and interrupted turns', async ($, on) => {

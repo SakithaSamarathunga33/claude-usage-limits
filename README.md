@@ -68,7 +68,7 @@ It stays quiet when you interrupt Claude yourself, and for the background helper
 | `/limits unmute` | Turns the chime back on. |
 | `/limits` | Shows the detailed view of your limits. |
 
-The bell at the end of the bars shows the current setting: 🔔 on, 🔕 muted. The setting is kept for new sessions.
+The bell at the end of the bars shows the current setting: 🔔 on, 🔕 muted. In VS Code and the desktop app, click the bell to switch it. The setting is shared by every Claude Code window and terminal, and kept for new sessions. A change made in another window shows on the bell within a minute.
 
 ## Update
 
@@ -143,7 +143,7 @@ Yes. It's open source under the MIT license.
 
 ## Privacy
 
-The plugin only reads the usage figures Claude Code already has. It makes no network requests of its own and does not touch your login. The last reading and your mute setting are saved in Claude Code's own plugin storage on your computer, so a new session has something to show.
+The plugin only reads the usage figures Claude Code already has. It makes no network requests of its own and does not touch your login. The last reading is saved in Claude Code's own plugin storage on your computer, so a new session has something to show. Your mute setting is saved in `~/.claude/plugins/usage-settings.json`.
 
 On Windows it runs PowerShell on your computer to play the chime and show the notification. It runs nothing else.
 

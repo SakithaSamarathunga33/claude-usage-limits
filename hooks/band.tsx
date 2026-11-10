@@ -5,7 +5,7 @@ import { bellFor, meterSvg, type Meter } from './format'
 const BAR_WIDTH = 72
 const BAR_HEIGHT = 6
 
-type Drawing = Pick<Elements['vscode'], 'Box' | 'Text' | 'Svg'>
+type Drawing = Pick<Elements['vscode'], 'Box' | 'Text' | 'Svg' | 'Button'>
 
 /** `2h 14m` as `2h14m`: the reset is a side note, kept short so the row fits. */
 const compact = (reset: string) => reset.replaceAll(' ', '')
@@ -14,10 +14,16 @@ const compact = (reset: string) => reset.replaceAll(' ', '')
  * The editors' band: the windows side by side on the left, the chime's bell on the right.
  * Only a panel too narrow for both windows wraps the second under the first.
  *
- * The bell is an icon, not a Button: VS Code draws every Button in its theme's button
- * color. `/limits mute` and `/limits unmute` switch it.
+ * The bell is a Button, which VS Code draws as a box in its theme's button color; a
+ * Markdown link avoids the box but drops onto a row of its own. A click switches the
+ * chime, as `/limits mute` and `unmute` do.
  */
-export function drawBand({ Box, Text, Svg }: Drawing, meters: readonly Meter[], isMuted: boolean) {
+export function drawBand(
+  { Box, Text, Svg, Button }: Drawing,
+  meters: readonly Meter[],
+  isMuted: boolean,
+  onToggle: () => Promise<unknown>,
+) {
   return (
     <Box flexDirection="row" justifyContent="space-between" alignItems="center" columnGap="md">
       <Box flexDirection="row" flexWrap="wrap" alignItems="center" columnGap="lg" rowGap="xs">
@@ -38,7 +44,7 @@ export function drawBand({ Box, Text, Svg }: Drawing, meters: readonly Meter[], 
           </Box>
         ))}
       </Box>
-      <Text size="caption" dimColor={isMuted}>{bellFor(isMuted)}</Text>
+      <Button key="sound" plain dimColor={isMuted} label={bellFor(isMuted)} onPress={onToggle} />
     </Box>
   )
 }

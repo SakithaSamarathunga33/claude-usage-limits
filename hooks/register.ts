@@ -22,11 +22,13 @@ const NOTIFY_TITLE = 'Claude'
 /** Windows shows a notification only under a registered app; PowerShell's own is on every install. */
 const POWERSHELL_APP_ID = '{1AC14E77-02E7-4E5D-B744-2EB1AE5198B7}\\WindowsPowerShell\\v1.0\\powershell.exe'
 
-/** Whether the chime is muted, kept across sessions; the atom only redraws the bell. */
-const MUTED_KEY = 'isChimeMuted'
+/**
+ * The chime's mute setting, in a file of its own that every session reads afresh: a
+ * mute typed in the terminal holds in VS Code too, whatever a session keeps in memory.
+ */
+const SETTINGS_FILE = 'plugins/usage-settings.json'
 
 const reading = atom({ plugin: 'usage', key: 'reading' } as const, null as Reading | null)
-const muted = atom({ plugin: 'usage', key: 'isMuted' } as const, null as boolean | null)
 
 /**
  * Where the band is drawn. The terminal keeps the line under the prompt: a band there gets
@@ -159,13 +161,29 @@ async function notifyDone($: EngineInterface, e: TurnCompleteInput) {
   $.ui.toast(text)
 }
 
+/** Claude Code's configuration folder, where the settings file lives beside its own. */
+async function settingsPath($: EngineInterface) {
+  const configDir =
+    (await $.env.get('CLAUDE_CONFIG_DIR')) ??
+    `${(await $.env.get('HOME')) ?? (await $.env.get('USERPROFILE'))}/.claude`
+
+  return `${configDir}/${SETTINGS_FILE}`
+}
+
 async function isChimeMuted($: EngineInterface) {
-  return (await $.store.get(MUTED_KEY)) === true
+  const path = await settingsPath($)
+  if (!(await $.fs.exists(path))) return false
+
+  try {
+    return (JSON.parse(await $.fs.read(path)) as { isChimeMuted?: unknown }).isChimeMuted === true
+  } catch {
+    // A file another tool mangled: the chime stays on rather than the band failing.
+    return false
+  }
 }
 
 async function setChimeMuted($: EngineInterface, isMuted: boolean) {
-  await $.store.set(MUTED_KEY, isMuted)
-  await update($, muted, () => isMuted)
+  await $.fs.write(await settingsPath($), `${JSON.stringify({ isChimeMuted: isMuted }, null, 2)}\n`)
 
   // The line under the prompt shows the bell too; redraw it with the same figures.
   const current = await read($, reading)
@@ -250,9 +268,15 @@ export const register: Register = on => {
       $.clock.after(1, () => $.ui.status(undefined))
     }
 
-    const isMuted = (await read($, muted)) ?? (await isChimeMuted($))
+    // Read on every draw: the band redraws each minute, so another session's mute shows within one.
+    const isMuted = await isChimeMuted($)
+    // Reads the file again: another session may have switched it since this draw.
+    const onToggle = () =>
+      isChimeMuted($)
+        .then(wasMuted => setChimeMuted($, !wasMuted))
+        .catch((error: unknown) => logFailure($, 'mute', error))
 
-    return drawBand($.ui.resolve(e), meters, isMuted)
+    return drawBand($.ui.resolve(e), meters, isMuted, onToggle)
   })
 
   on('command.run', { command: COMMAND }, ($, e) =>

@@ -5,6 +5,6 @@ export type Reading = {
 
 declare module 'claude-code' {
   interface PluginState {
-    'usage': { reading: Reading | null; isMuted: boolean | null }
+    'usage': { reading: Reading | null }
   }
 }
