@@ -565,16 +565,16 @@ describe('when a task finishes', () => {
   }
   const settle = () => new Promise(resolve => setTimeout(resolve, 0))
 
-  test('on Windows, shows a Windows notification and plays the chime, whatever has focus', async ($, on) => {
+  test('on Windows, plays the chime through PowerShell and shows no PowerShell notification', async ($, on) => {
     const seen = alerts(on, { hasPowerShell: true, hasChannel: true })
 
     const result = await $.turn.complete(TURN)
     await settle()
 
     expect(result.text).toBe('done')
-    expect(seen.scripts.some(s => s.includes('<text>Task finished (12s)</text>') && s.includes('.Show('))).toBe(true)
-    expect(seen.scripts.some(s => /sounds\/done\.wav'\)\.PlaySync\(\)$/.test(s))).toBe(true)
-    expect(seen.notified).toEqual([])
+    expect(seen.scripts).toHaveLength(1)
+    expect(seen.scripts[0]).toMatch(/sounds\/done\.wav'\)\.PlaySync\(\)$/)
+    expect(seen.notified).toEqual(['Task finished (12s)'])
     expect(seen.toasts).toEqual([])
   })
 
@@ -604,8 +604,8 @@ describe('when a task finishes', () => {
     await $.turn.complete(TURN)
     await settle()
 
-    expect(seen.scripts.some(s => s.includes('.Show('))).toBe(true)
-    expect(seen.scripts.some(s => s.includes('PlaySync'))).toBe(false)
+    expect(seen.notified).toEqual(['Task finished (12s)'])
+    expect(seen.scripts).toEqual([])
   })
 
   test('a mute from another session (the terminal) silences this one', async ($, on) => {

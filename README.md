@@ -12,7 +12,7 @@
 - Bars turn **amber at 75%** and **red at 90%**.
 - The figures update as you use Claude, and the countdown refreshes every minute.
 - A new session shows your last known figures straight away, then switches to live ones after its first reply.
-- When Claude finishes a task you hear a short chime and get a notification, even while you are in another window. You can mute the chime.
+- When Claude finishes a task you hear a short chime, even while you are in another window, and get a notification. You can mute the chime.
 - It works in every project once installed.
 
 ## What you need
@@ -53,10 +53,7 @@ Type `/limits` in Claude Code for a more detailed view.
 
 ### When a task finishes
 
-Each time Claude finishes replying, the plugin plays a short chime and shows a notification such as **Task finished (42s)**.
-
-- **Windows:** a Windows notification in the corner of the screen, so you see it from any window. It appears under the name *Windows PowerShell*.
-- **Mac and Linux:** your terminal's own notification, where it has one. Otherwise a small pop-up inside Claude Code.
+Each time Claude finishes replying, the plugin plays a short chime and shows a notification such as **Task finished (42s)**: your terminal's own notification where it has one, otherwise a small pop-up inside Claude Code.
 
 It stays quiet when you interrupt Claude yourself, and for the background helpers Claude starts during a task.
 
@@ -108,7 +105,6 @@ claude plugin marketplace remove claude-usage-limits
 | The bars disappeared after pressing `[-]` | That collapses them. Press `ctrl+x`, then `ctrl+a`, to bring them back, or start a new session. |
 | A line of text instead of bars in VS Code or the desktop app | Your version of Claude Code is not drawing the bars there. Update Claude Code. The text line shows the same figures. In the terminal the line under the prompt is expected. |
 | No chime when a task finishes | Check that the bell shows 🔔, not 🔕. If it is muted, type `/limits unmute`. On Windows, also check the volume of *System sounds* in the Volume Mixer. |
-| No notification on Windows | Turn off *Do not disturb*, and check that notifications are on for *Windows PowerShell* in **Settings → System → Notifications**. |
 | `/limits` says "Unknown option" | Only `/limits`, `/limits mute` and `/limits unmute` exist. |
 | `/limits` says "No usage-limit reading yet" | Send one message first. If it stays, check that you are signed in with a Pro or Max plan and not an API key. |
 | `/limits` is an unknown command | Update Claude Code, then open a new session. |
@@ -145,7 +141,7 @@ Yes. It's open source under the MIT license.
 
 The plugin only reads the usage figures Claude Code already has. It makes no network requests of its own and does not touch your login. The last reading is saved in Claude Code's own plugin storage on your computer, so a new session has something to show. Your mute setting is saved in `~/.claude/plugins/usage-settings.json`.
 
-On Windows it runs PowerShell on your computer to play the chime and show the notification. It runs nothing else.
+On Windows it runs PowerShell on your computer to play the chime. It runs nothing else.
 
 ## Good to know
 

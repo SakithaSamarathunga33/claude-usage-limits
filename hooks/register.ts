@@ -19,8 +19,6 @@ const STORE_KEY = 'lastRateLimits'
 /** The tone played when a task finishes, relative to the plugin's directory. */
 const CHIME = 'sounds/done.wav'
 const NOTIFY_TITLE = 'Claude'
-/** Windows shows a notification only under a registered app; PowerShell's own is on every install. */
-const POWERSHELL_APP_ID = '{1AC14E77-02E7-4E5D-B744-2EB1AE5198B7}\\WindowsPowerShell\\v1.0\\powershell.exe'
 
 /**
  * The chime's mute setting, in a file of its own that every session reads afresh: a
@@ -113,9 +111,6 @@ function refreshCurrent($: EngineInterface) {
 /** A PowerShell single-quoted string literal. */
 const psString = (text: string) => `'${text.replaceAll("'", "''")}'`
 
-const escapeXml = (text: string) =>
-  text.replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;')
-
 /** True once the script ran; false where PowerShell cannot start (not Windows) or the script failed. */
 async function runPowerShell($: EngineInterface, script: string): Promise<boolean> {
   try {
@@ -136,27 +131,11 @@ async function playChime($: EngineInterface) {
   }
 }
 
-/** A Windows notification, shown under PowerShell's app id; silent, as the chime is the sound. */
-function windowsToastScript(title: string, text: string) {
-  const xml = `<toast><visual><binding template="ToastGeneric"><text>${escapeXml(title)}</text><text>${escapeXml(text)}</text></binding></visual><audio silent="true"/></toast>`
-
-  return [
-    '$null = [Windows.UI.Notifications.ToastNotificationManager, Windows.UI.Notifications, ContentType = WindowsRuntime]',
-    '$x = [Windows.Data.Xml.Dom.XmlDocument, Windows.Data.Xml.Dom.XmlDocument, ContentType = WindowsRuntime]::new()',
-    `$x.LoadXml(${psString(xml)})`,
-    `[Windows.UI.Notifications.ToastNotificationManager]::CreateToastNotifier(${psString(POWERSHELL_APP_ID)}).Show([Windows.UI.Notifications.ToastNotification]::new($x))`,
-  ].join('\n')
-}
-
-/**
- * Seen even when the window is out of focus: a Windows notification first, then the
- * terminal's own; the in-app toast only where neither exists.
- */
+/** The terminal's own notification; the in-app toast only where it has none. */
 async function notifyDone($: EngineInterface, e: TurnCompleteInput) {
   const seconds = Math.round(e.durationMs / 1000)
   const text = e.reason === 'answer' ? `Task finished (${seconds}s)` : `Task stopped: ${e.reason}`
 
-  if (await runPowerShell($, windowsToastScript(NOTIFY_TITLE, text))) return
   if ((await $.ui.notify(text, { title: NOTIFY_TITLE })).isSent) return
   $.ui.toast(text)
 }
