@@ -1,6 +1,6 @@
 {
   "name": "usage",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Shows how much of the 5-hour session limit and the weekly limit is used, as bars above the prompt and via /limits, and notifies with a chime when a task finishes",
   "types": "./types/index.d.ts"
 }
