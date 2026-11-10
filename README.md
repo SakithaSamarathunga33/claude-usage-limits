@@ -3,9 +3,9 @@
 
 See how much of your Claude plan you have used without leaving Claude Code. This plugin shows your **5-hour session limit** and your **weekly limit** as progress bars right above the prompt box, with the time left until each one resets.
 
-![Usage bars in dark and light themes, at low, high and full usage](docs/preview.png)
+![Usage bars in dark and light themes at low, high and full usage, each with the chime's bell, and the terminal's line under the prompt](docs/preview.png)
 
-*A preview of the bars in dark and light themes. The figures are examples.*
+*A preview of the bars in VS Code and the desktop app, and the line the terminal shows, in dark and light themes. The second row has the chime muted (🔕). The figures are examples.*
 
 - Bars turn **amber at 75%** and **red at 90%**.
 - The figures update as you use Claude, and the countdown refreshes every minute.
