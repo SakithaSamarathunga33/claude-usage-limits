@@ -1,0 +1,194 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Claude Usage Limits – Check your Claude 5-hour &amp; weekly limit in Claude Code</title>
+<meta name="description" content="Free Claude Code plugin to check your Claude usage. See your 5-hour session limit and weekly limit as progress bars, with a countdown to when each Claude limit resets. For Pro and Max plans.">
+<meta name="keywords" content="claude usage, claude limits, claude usage limit, claude 5 hour limit, claude weekly limit, claude code usage, claude code plugin, claude pro limit, claude max limit, claude usage tracker">
+<link rel="canonical" href="https://sakithasamarathunga33.github.io/claude-usage-limits/">
+<meta name="robots" content="index, follow">
+<meta name="theme-color" content="#0b0909">
+
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Claude Usage Limits">
+<meta property="og:title" content="Claude Usage Limits – see your Claude 5-hour & weekly limit in Claude Code">
+<meta property="og:description" content="Progress bars for your Claude 5-hour session limit and weekly limit, with reset countdowns. Free Claude Code plugin for Pro and Max plans.">
+<meta property="og:url" content="https://sakithasamarathunga33.github.io/claude-usage-limits/">
+<meta property="og:image" content="https://sakithasamarathunga33.github.io/claude-usage-limits/social-preview.png">
+<meta property="og:image:width" content="1280">
+<meta property="og:image:height" content="640">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Claude Usage Limits – Claude Code plugin">
+<meta name="twitter:description" content="See your Claude 5-hour and weekly usage limits as progress bars, with reset countdowns.">
+<meta name="twitter:image" content="https://sakithasamarathunga33.github.io/claude-usage-limits/social-preview.png">
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  "name": "Claude Usage Limits",
+  "alternateName": "claude-usage-limits",
+  "description": "Claude Code plugin that shows your Claude 5-hour session limit and weekly limit as progress bars, with a countdown to each reset.",
+  "applicationCategory": "DeveloperApplication",
+  "operatingSystem": "Windows, macOS, Linux",
+  "softwareVersion": "0.2.0",
+  "license": "https://opensource.org/licenses/MIT",
+  "url": "https://sakithasamarathunga33.github.io/claude-usage-limits/",
+  "downloadUrl": "https://github.com/SakithaSamarathunga33/claude-usage-limits",
+  "codeRepository": "https://github.com/SakithaSamarathunga33/claude-usage-limits",
+  "image": "https://sakithasamarathunga33.github.io/claude-usage-limits/preview.png",
+  "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
+  "author": { "@type": "Person", "name": "Sakitha Samarathunga", "url": "https://github.com/SakithaSamarathunga33" }
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    { "@type": "Question", "name": "How do I check my Claude usage limit in Claude Code?",
+      "acceptedAnswer": { "@type": "Answer", "text": "Install the Claude Usage Limits plugin with: claude plugin install usage --marketplace SakithaSamarathunga33/claude-usage-limits. Your 5-hour and weekly Claude usage then shows as progress bars above the prompt. Type /limits for a detailed view." } },
+    { "@type": "Question", "name": "How do I see when my Claude limit resets?",
+      "acceptedAnswer": { "@type": "Answer", "text": "Each bar ends with a countdown, such as 2h14m for the 5-hour limit or 2d3h for the weekly limit. It refreshes every minute." } },
+    { "@type": "Question", "name": "Does it show the weekly limit as well as the 5-hour limit?",
+      "acceptedAnswer": { "@type": "Answer", "text": "Yes. Both the 5-hour session limit and the weekly limit are shown side by side, each with its own percentage and reset time." } },
+    { "@type": "Question", "name": "Which Claude plans does it work with?",
+      "acceptedAnswer": { "@type": "Answer", "text": "Claude Pro and Claude Max. API-key logins have no plan limits, so there is nothing to show." } },
+    { "@type": "Question", "name": "Does it work in VS Code?",
+      "acceptedAnswer": { "@type": "Answer", "text": "Yes. In the Claude Code VS Code extension and the desktop app you get progress bars above the prompt. In the terminal you get a one-line summary under the prompt." } },
+    { "@type": "Question", "name": "Is the Claude usage limits plugin free?",
+      "acceptedAnswer": { "@type": "Answer", "text": "Yes. It is free and open source under the MIT license." } }
+  ]
+}
+</script>
+
+<style>
+:root{
+  --bg:#0b0909; --surface:#151111; --line:#2a2120; --text:#f3eeec; --muted:#b4a8a4;
+  --accent:#ff8a3d; --accent-2:#ffb066; --code:#1d1716;
+}
+@media (prefers-color-scheme: light){
+  :root:not([data-theme="dark"]){
+    --bg:#fffaf7; --surface:#ffffff; --line:#eadfd9; --text:#1d1715; --muted:#62554f;
+    --accent:#d9611a; --accent-2:#b84f10; --code:#f6eee9;
+  }
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--text);
+  font:16px/1.6 system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
+a{color:var(--accent)}
+.wrap{max-width:960px;margin:0 auto;padding:0 16px}
+header.top{display:flex;justify-content:space-between;align-items:center;padding:16px 0;gap:12px}
+header.top .brand{font-weight:700;color:var(--text);text-decoration:none}
+header.top nav a{margin-left:16px;text-decoration:none;color:var(--muted)}
+header.top nav a:hover{color:var(--text)}
+.hero{padding:40px 0 24px}
+.hero h1{font-size:clamp(28px,5vw,46px);line-height:1.15;margin:0 0 16px;letter-spacing:-.01em;text-wrap:balance}
+.hero h1 span{color:var(--accent)}
+.hero p.lead{font-size:clamp(17px,2.2vw,20px);color:var(--muted);max-width:720px;margin:0 0 24px}
+.cta{display:flex;flex-wrap:wrap;gap:12px;margin-bottom:28px}
+.btn{display:inline-block;padding:11px 18px;border-radius:10px;font-weight:600;text-decoration:none;border:1px solid var(--line)}
+.btn.primary{background:var(--accent);color:#1a0d05;border-color:var(--accent)}
+.btn.ghost{color:var(--text);background:var(--surface)}
+img.shot{width:100%;height:auto;border-radius:14px;border:1px solid var(--line);display:block}
+section{padding:32px 0;border-top:1px solid var(--line)}
+section h2{font-size:clamp(22px,3vw,28px);margin:0 0 14px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:16px}
+.card h3{margin:0 0 6px;font-size:17px}
+.card p{margin:0;color:var(--muted);font-size:15px}
+pre{background:var(--code);border:1px solid var(--line);border-radius:10px;padding:14px;overflow-x:auto;margin:10px 0 14px}
+code{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:14px}
+.copy-row{position:relative}
+.copy{position:absolute;top:8px;right:8px;background:var(--surface);color:var(--text);border:1px solid var(--line);
+  border-radius:8px;padding:4px 10px;font-size:13px;cursor:pointer}
+table{width:100%;border-collapse:collapse;font-size:15px}
+td,th{text-align:left;padding:10px;border-bottom:1px solid var(--line);vertical-align:top}
+.table-scroll{overflow-x:auto}
+details{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:12px 16px;margin-bottom:10px}
+summary{cursor:pointer;font-weight:600}
+details p{margin:10px 0 0;color:var(--muted)}
+footer{padding:28px 0 40px;color:var(--muted);font-size:14px;border-top:1px solid var(--line)}
+@media (max-width:560px){header.top nav a{margin-left:10px;font-size:14px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <a class="brand" href="./">Claude Usage Limits</a>
+    <nav><a href="#install">Install</a><a href="#faq">FAQ</a><a href="https://github.com/SakithaSamarathunga33/claude-usage-limits">GitHub</a></nav>
+  </header>
+
+  <main>
+    <div class="hero">
+      <h1>Check your <span>Claude usage limits</span> right inside Claude Code</h1>
+      <p class="lead">A free Claude Code plugin that shows your <strong>5-hour session limit</strong> and <strong>weekly limit</strong> as progress bars above the prompt, with a countdown to when each Claude limit resets. For Claude Pro and Max plans.</p>
+      <div class="cta">
+        <a class="btn primary" href="#install">Install in one command</a>
+        <a class="btn ghost" href="https://github.com/SakithaSamarathunga33/claude-usage-limits">View on GitHub</a>
+      </div>
+      <img class="shot" src="preview.png" width="1696" height="1610" alt="Claude usage limit progress bars in Claude Code showing the 5-hour session limit and weekly limit with reset countdowns, in dark and light themes">
+    </div>
+
+    <section aria-labelledby="features">
+      <h2 id="features">See how much Claude you have left</h2>
+      <div class="grid">
+        <div class="card"><h3>5-hour and weekly limits</h3><p>Both Claude usage limits side by side, each with its own percentage.</p></div>
+        <div class="card"><h3>Reset countdown</h3><p>See exactly when your Claude limit resets, refreshed every minute.</p></div>
+        <div class="card"><h3>Colour warnings</h3><p>Bars turn amber at 75% and red at 90%, so you know before you hit the limit.</p></div>
+        <div class="card"><h3>Task-finished chime</h3><p>A short chime and notification when Claude finishes, even in another window. Mute it any time.</p></div>
+        <div class="card"><h3>VS Code, desktop, terminal</h3><p>Progress bars in VS Code and the desktop app, a one-line summary in the terminal.</p></div>
+        <div class="card"><h3>Private</h3><p>Reads only the figures Claude Code already has. No network requests, no login access.</p></div>
+      </div>
+    </section>
+
+    <section aria-labelledby="install">
+      <h2 id="install">Install</h2>
+      <p>You need a Claude Pro or Max subscription, Claude Code signed in, and Git. Run this in PowerShell (Windows) or Terminal (Mac/Linux):</p>
+      <div class="copy-row"><pre><code id="cmd">claude plugin install usage --marketplace SakithaSamarathunga33/claude-usage-limits</code></pre><button class="copy" type="button" data-target="cmd">Copy</button></div>
+      <p>Then open a new Claude session. The bars appear after your first reply. Type <code>/limits</code> for a detailed view, <code>/limits mute</code> or <code>/limits unmute</code> for the chime.</p>
+      <div class="table-scroll">
+        <table>
+          <thead><tr><th>Where you use Claude Code</th><th>What you get</th></tr></thead>
+          <tbody>
+            <tr><td>VS Code extension</td><td>Progress bars above the prompt</td></tr>
+            <tr><td>Desktop app</td><td>Progress bars above the prompt</td></tr>
+            <tr><td>Terminal</td><td><code>5h ▰▰▰▰▱▱▱▱▱▱ 42% ↻ 2h14m │ Week ▰▰▱▱▱▱▱▱▱▱ 18% ↻ 2d3h</code></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section aria-labelledby="faq">
+      <h2 id="faq">FAQ</h2>
+      <details open><summary>How do I check my Claude usage limit in Claude Code?</summary>
+        <p>Install this plugin with the command above. Your 5-hour and weekly Claude usage then shows as progress bars above the prompt. Type <code>/limits</code> for a detailed view.</p></details>
+      <details><summary>How do I see when my Claude limit resets?</summary>
+        <p>Each bar ends with a countdown, such as <code>↻ 2h14m</code> for the 5-hour limit or <code>↻ 2d3h</code> for the weekly limit. It refreshes every minute.</p></details>
+      <details><summary>Does it show the weekly limit as well as the 5-hour limit?</summary>
+        <p>Yes. Both the 5-hour session limit and the weekly limit are shown side by side, each with its own percentage and reset time.</p></details>
+      <details><summary>Which Claude plans does it work with?</summary>
+        <p>Claude Pro and Claude Max. API-key logins have no plan limits, so there is nothing to show.</p></details>
+      <details><summary>Does it work in VS Code?</summary>
+        <p>Yes. In the Claude Code VS Code extension and the desktop app you get progress bars above the prompt. In the terminal you get a one-line summary under the prompt.</p></details>
+      <details><summary>Is the Claude usage limits plugin free?</summary>
+        <p>Yes. It is free and open source under the MIT license.</p></details>
+    </section>
+  </main>
+
+  <footer>
+    <p>Claude Usage Limits is an open-source community plugin by <a href="https://github.com/SakithaSamarathunga33">Sakitha Samarathunga</a>, MIT licensed. It is not affiliated with or endorsed by Anthropic. Claude is a trademark of Anthropic.</p>
+  </footer>
+</div>
+<script>
+document.querySelectorAll('.copy').forEach(function(b){
+  b.addEventListener('click',function(){
+    var t=document.getElementById(b.dataset.target).textContent;
+    try{navigator.clipboard.writeText(t).then(function(){b.textContent='Copied';setTimeout(function(){b.textContent='Copy'},1500)})}catch(e){}
+  });
+});
+</script>
+</body>
+</html>
