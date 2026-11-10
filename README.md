@@ -1,9 +1,11 @@
-# Claude usage limits
-![claude-usage-limits, a Claude Code plugin that tracks your Claude plan usage with progress bars and reset timers](docs/cover.png)
+# Claude Usage Limits: a Claude Code plugin to track your 5-hour and weekly limits
+![Claude usage limits plugin for Claude Code, tracking Claude plan usage with progress bars and reset timers](docs/cover.png)
 
-See how much of your Claude plan you have used without leaving Claude Code. This plugin shows your **5-hour session limit** and your **weekly limit** as progress bars right above the prompt box, with the time left until each one resets.
+**Check your Claude usage and see how much of your Claude limit is left, without leaving Claude Code.** This plugin shows your **5-hour session limit** and your **weekly limit** as progress bars right above the prompt box, with a countdown to when each Claude limit resets. It works with Claude Pro and Claude Max plans in VS Code, the desktop app and the terminal.
 
-![Usage bars in dark and light themes at low, high and full usage, each with the chime's bell, and the terminal's line under the prompt](docs/preview.png)
+**Website:** [sakithasamarathunga33.github.io/claude-usage-limits](https://sakithasamarathunga33.github.io/claude-usage-limits/)
+
+![Claude usage limit progress bars in Claude Code, in dark and light themes at low, high and full usage, and the terminal line under the prompt](docs/preview.png)
 
 *A preview of the bars in VS Code and the desktop app, and the line the terminal shows, in dark and light themes. The second row has the chime muted (🔕). The figures are examples.*
 
@@ -112,6 +114,32 @@ claude plugin marketplace remove claude-usage-limits
 | `/limits` is an unknown command | Update Claude Code, then open a new session. |
 | The install fails to download | Check that `git --version` works. If it doesn't, install Git from [git-scm.com](https://git-scm.com/downloads), open a new terminal and try again. |
 | A limit shows "reset" | That limit has reset. The new figure arrives with your next reply. |
+
+## FAQ
+
+### How do I check my Claude usage limit in Claude Code?
+
+Install this plugin with the command in [Install](#install). Your 5-hour and weekly Claude usage then shows as progress bars above the prompt. Type `/limits` for a detailed view.
+
+### How do I see when my Claude limit resets?
+
+Each bar ends with a countdown, such as `↻ 2h14m` for the 5-hour limit or `↻ 2d3h` for the weekly limit. It refreshes every minute.
+
+### Does it show the weekly limit as well as the 5-hour limit?
+
+Yes. Both the 5-hour session limit and the weekly limit are shown side by side, each with its own percentage and reset time.
+
+### Which plans does it work with?
+
+Claude Pro and Claude Max. If you sign in to Claude Code with an API key there are no plan limits, so there is nothing to show.
+
+### Does it work in VS Code?
+
+Yes. In the Claude Code VS Code extension and the desktop app you get progress bars above the prompt. In the terminal you get a one-line summary under the prompt.
+
+### Is it free?
+
+Yes. It's open source under the MIT license.
 
 ## Privacy
 
