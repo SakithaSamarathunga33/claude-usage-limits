@@ -44,30 +44,30 @@ describe('formatLimits', () => {
 
   test('puts the 5-hour window first, then the weekly one', () => {
     expect(formatLimits(LIMITS, NOW)).toBe(
-      '5h ◑ 42.5% ↻ 2h 14m │ Week ◔ 18% ↻ 2d 3h',
+      '5h ▰▰▰▰▱▱▱▱▱▱ 42.5% ↻ 2h14m │ Week ▰▰▱▱▱▱▱▱▱▱ 18% ↻ 2d3h',
     )
   })
 
   test('omits the reset when the window has none, and caps the bar at full', () => {
     const over: SessionRateLimit[] = [{ kind: 'spend_limit', percentUsed: 130 }]
-    expect(formatLimits(over, NOW)).toBe('Spend ● 130%')
+    expect(formatLimits(over, NOW)).toBe('Spend ▰▰▰▰▰▰▰▰▰▰ 130%')
   })
 
   test('labels an unknown window by its kind', () => {
     const odd: SessionRateLimit[] = [{ kind: 'seven_day_opus', percentUsed: 5 }]
-    expect(formatLimits(odd, NOW)).toBe('seven_day_opus ○ 5%')
+    expect(formatLimits(odd, NOW)).toBe('seven_day_opus ▰▱▱▱▱▱▱▱▱▱ 5%')
   })
 
   test('does not mistake inherited object keys for known windows', () => {
     const odd: SessionRateLimit[] = [{ kind: 'toString', percentUsed: 5 }]
-    expect(formatLimits(odd, NOW)).toBe('toString ○ 5%')
+    expect(formatLimits(odd, NOW)).toBe('toString ▰▱▱▱▱▱▱▱▱▱ 5%')
   })
 
   test('drops a stale percentage once its window has reset', () => {
     const past: SessionRateLimit[] = [
       { kind: 'five_hour', percentUsed: 91, resetsAt: at(-MINUTE) },
     ]
-    expect(formatLimits(past, NOW)).toBe('5h ○ reset')
+    expect(formatLimits(past, NOW)).toBe('5h ▱▱▱▱▱▱▱▱▱▱ reset')
   })
 })
 
@@ -88,7 +88,7 @@ const engine = (
   statuses: (string | undefined)[],
   limits: SessionRateLimit[],
   stored: Record<string, unknown> = {},
-  surfaces: readonly ('vscode' | 'terminal')[] = ['vscode'],
+  surfaces: readonly ('vscode' | 'terminal' | 'mobile')[] = ['vscode'],
   onEngineStart: () => void = () => {},
 ) => {
   const clock = mock.clock(on, { now: NOW })
@@ -114,7 +114,7 @@ const engine = (
 }
 
 const BAND = {
-  plugin: 'usage-limits',
+  plugin: 'usage',
   component: 'AbovePrompt',
   props: {
     hasSurvey: false,
@@ -164,10 +164,47 @@ describe('the band above the prompt', () => {
       expect(String(bar?.props.alt)).toBe('5-hour session: 42.5% used, resets in 2h 14m')
       expect(await ui.find({ type: 'Text', text: '42.5%' })).toBeDefined()
       expect(await ui.find({ type: 'Text', text: '18%' })).toBeDefined()
-      expect(await ui.find({ type: 'Text', text: /2d 3h/ })).toBeDefined()
+      // The reset is short, so the row fits beside the bell.
+      expect(await ui.find({ type: 'Text', text: '↻ 2h14m' })).toBeDefined()
+      expect(await ui.find({ type: 'Text', text: '↻ 2d3h' })).toBeDefined()
+      expect(await ui.find({ type: 'Text', text: '\u{1F514}' })).toBeDefined()
+      // A plain icon: VS Code would draw a Button in its theme's button color.
+      expect(await ui.find({ type: 'Button' })).toBeUndefined()
       await ui.unmount()
     })
   }
+
+  test('/limits mute and unmute switch the bell', async ($, on) => {
+    engine(on, [], LIMITS)
+    engineDraws(on)
+    const limits = (args: string) =>
+      $.command.run({
+        command: 'limits',
+        args,
+        origin: { kind: 'composer' },
+        presentation: { isFullscreen: false, columns: 80 },
+      })
+
+    await $.session.start({ cwd: '/', surface: 'vscode', isInteractive: true })
+    const ui = await $.ui.mount({ ...BAND, surface: 'vscode' })
+
+    expect((await limits(' Mute ')).text).toBe('Chime muted. Notifications still show.')
+    expect(await ui.find({ type: 'Text', text: '\u{1F515}' })).toBeDefined()
+    expect((await limits('unmute')).text).toBe('Chime on.')
+    expect(await ui.find({ type: 'Text', text: '\u{1F514}' })).toBeDefined()
+    expect((await limits('loud')).text).toMatch(/Unknown option "loud"/)
+    await ui.unmount()
+  })
+
+  test('a new session draws the bell muted when it was left muted', async ($, on) => {
+    engine(on, [], [], { lastRateLimits: LIMITS, isChimeMuted: true })
+    engineDraws(on)
+
+    const ui = await $.ui.mount({ ...BAND, surface: 'vscode' })
+
+    expect(await ui.find({ type: 'Text', text: '\u{1F515}' })).toBeDefined()
+    await ui.unmount()
+  })
 
   test('the first draw shows the saved reading before the session has started', async ($, on) => {
     engine(on, [], [], { lastRateLimits: LIMITS })
@@ -201,15 +238,32 @@ describe('the band above the prompt', () => {
     await ui.unmount()
   })
 
-  test('leaves the terminal to the text line', async ($, on) => {
+  test('leaves the terminal to the line under the prompt', async ($, on) => {
     engine(on, [], LIMITS)
     engineDraws(on)
 
     await $.session.start({ cwd: '/', surface: 'terminal', isInteractive: true })
     const ui = await $.ui.mount({ ...BAND, surface: 'terminal' })
 
+    // A band there would get the engine's [-], which hides it until ctrl+x ctrl+a.
     expect(await ui.find({ type: 'Text', text: 'engine' })).toBeDefined()
     await ui.unmount()
+  })
+
+  test('/limits mute shows the muted bell on the line under the prompt', async ($, on) => {
+    const statuses: (string | undefined)[] = []
+    engine(on, statuses, LIMITS, {}, ['terminal'])
+
+    await $.session.start({ cwd: '/', surface: 'terminal', isInteractive: true })
+    expect(statuses.at(-1)).toMatch(/│ \u{1F514}$/u)
+
+    await $.command.run({
+      command: 'limits',
+      args: 'mute',
+      origin: { kind: 'composer' },
+      presentation: { isFullscreen: false, columns: 80 },
+    })
+    expect(statuses.at(-1)).toMatch(/^5h ▰.* 42\.5% .*Week .* 18% .*│ \u{1F515}$/u)
   })
 
   test('draws nothing of its own without a reading or during a survey', async ($, on) => {
@@ -294,7 +348,7 @@ describe('the mod', () => {
       changed: ['rateLimits'],
     })
 
-    expect(statuses.at(-1)).toBe('5h ◕ 91% ↻ 20m')
+    expect(statuses.at(-1)).toBe('5h ▰▰▰▰▰▰▰▰▰▱ 91% ↻ 20m │ \u{1F514}')
   })
 
   test('leaves the status line alone when only the context moved', async ($, on) => {
@@ -374,7 +428,7 @@ describe('the mod', () => {
 
     await $.session.start({ cwd: '/', surface: 'vscode', isInteractive: true })
 
-    expect(statuses.at(-1)).toBe('5h ○ 3%')
+    expect(statuses.at(-1)).toBe('5h ▰▱▱▱▱▱▱▱▱▱ 3% │ \u{1F514}')
   })
 
   test('a saved value of the wrong shape is ignored', async ($, on) => {
@@ -400,7 +454,7 @@ describe('the mod', () => {
     })
     await $.session.start({ cwd: '/other-project', surface: 'vscode', isInteractive: true })
 
-    expect(statuses.at(-1)).toBe('Week ◔ 33%')
+    expect(statuses.at(-1)).toBe('Week ▰▰▰▱▱▱▱▱▱▱ 33% │ \u{1F514}')
   })
 
   test('/limits answers with the detailed view', async ($, on) => {
@@ -417,5 +471,97 @@ describe('the mod', () => {
 
     expect(result.text).toMatch(/5-hour session/)
     expect(result.text).toMatch(/Weekly/)
+    expect(result.text).toMatch(/ctrl\+x, then ctrl\+a/)
+  })
+})
+
+describe('when a task finishes', () => {
+  const TURN = { answer: 'done', durationMs: 12_400, isAborted: false, turnId: 't1', reason: 'answer' } as const
+
+  type Host = { hasPowerShell: boolean; hasChannel: boolean }
+
+  const alerts = (on: On, host: Host, stored: Record<string, unknown> = {}) => {
+    mock.store(on, stored)
+    const seen = { scripts: [] as string[], notified: [] as string[], toasts: [] as string[], clips: [] as unknown[] }
+    on('turn.complete', (_, e) => ({ text: e.answer }))
+    on('process.run', (_, e) => {
+      if (!host.hasPowerShell) throw new Error('powershell: not found')
+      seen.scripts.push(e.argv.at(-1) ?? '')
+
+      return { value: { exitCode: 0, stdout: '', stderr: '' } }
+    })
+    on('ui.notify', (_, e) => {
+      seen.notified.push(e.text)
+
+      return { value: host.hasChannel ? { isSent: true, channel: 'kitty' } : { isSent: false, reason: 'no-surface' } }
+    })
+    on('ui.toast', (_, e) => {
+      seen.toasts.push(e.text)
+
+      return { value: undefined }
+    })
+    on('audio.play', (_, e) => {
+      seen.clips.push(e.clip)
+
+      return { value: undefined }
+    })
+    on('ui.log', () => ({ value: undefined }))
+
+    return seen
+  }
+  const settle = () => new Promise(resolve => setTimeout(resolve, 0))
+
+  test('on Windows, shows a Windows notification and plays the chime, whatever has focus', async ($, on) => {
+    const seen = alerts(on, { hasPowerShell: true, hasChannel: true })
+
+    const result = await $.turn.complete(TURN)
+    await settle()
+
+    expect(result.text).toBe('done')
+    expect(seen.scripts.some(s => s.includes('<text>Task finished (12s)</text>') && s.includes('.Show('))).toBe(true)
+    expect(seen.scripts.some(s => /sounds\/done\.wav'\)\.PlaySync\(\)$/.test(s))).toBe(true)
+    expect(seen.notified).toEqual([])
+    expect(seen.toasts).toEqual([])
+  })
+
+  test('without PowerShell, uses the terminal notification and the engine player', async ($, on) => {
+    const seen = alerts(on, { hasPowerShell: false, hasChannel: true })
+
+    await $.turn.complete(TURN)
+    await settle()
+
+    expect(seen.notified).toEqual(['Task finished (12s)'])
+    expect(seen.toasts).toEqual([])
+    expect(seen.clips).toEqual([{ asset: 'sounds/done.wav' }])
+  })
+
+  test('falls back to the in-app toast where nothing else can notify', async ($, on) => {
+    const seen = alerts(on, { hasPowerShell: false, hasChannel: false })
+
+    await $.turn.complete(TURN)
+    await settle()
+
+    expect(seen.toasts).toEqual(['Task finished (12s)'])
+  })
+
+  test('a muted bell skips the chime but still notifies', async ($, on) => {
+    const seen = alerts(on, { hasPowerShell: true, hasChannel: true }, { isChimeMuted: true })
+
+    await $.turn.complete(TURN)
+    await settle()
+
+    expect(seen.scripts.some(s => s.includes('.Show('))).toBe(true)
+    expect(seen.scripts.some(s => s.includes('PlaySync'))).toBe(false)
+  })
+
+  test('stays quiet for subagents and interrupted turns', async ($, on) => {
+    const seen = alerts(on, { hasPowerShell: true, hasChannel: true })
+
+    await $.turn.complete({ ...TURN, agentId: 'a1' })
+    await $.turn.complete({ ...TURN, isAborted: true, reason: 'aborted' })
+    await settle()
+
+    expect(seen.scripts).toEqual([])
+    expect(seen.notified).toEqual([])
   })
 })

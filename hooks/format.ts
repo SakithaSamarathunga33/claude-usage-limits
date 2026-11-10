@@ -34,18 +34,22 @@ export const formatDuration = (ms: number): string => {
   return `${rest}m`
 }
 
+/** How many of a text bar's cells are filled: at least one for any use, none at zero. */
+const filledCells = (percent: number, cells: number): number =>
+  percent > 0 ? Math.min(cells, Math.max(1, Math.round((percent / 100) * cells))) : 0
+
+/** A bar in plain text, for the status line and /limits, which take no colors. */
 const bar = (percent: number, cells: number): string => {
-  const filled = Math.min(cells, Math.max(0, Math.round((percent / 100) * cells)))
+  const filled = filledCells(percent, cells)
 
   return '▰'.repeat(filled) + '▱'.repeat(cells - filled)
 }
 
-// One glyph per window keeps both on one line in the narrow VS Code panel; the status line takes plain text only.
-const GAUGE = ['○', '◔', '◑', '◕']
-const FULL_GAUGE = '●'
+/** The chime's state, as the band and the line under the prompt show it. */
+export const bellFor = (isMuted: boolean): string => (isMuted ? '\u{1F515}' : '\u{1F514}')
 
-const gauge = (percent: number): string =>
-  percent >= 100 ? FULL_GAUGE : (GAUGE[Math.min(3, Math.max(0, Math.round(percent / 25)))] ?? GAUGE[0]!)
+/** `2h 14m` as `2h14m`, so both windows fit on the status line. */
+const compact = (reset: string) => reset.replaceAll(' ', '')
 
 const msUntilReset = (limit: SessionRateLimit, now: number): number | undefined => {
   if (limit.resetsAt === undefined) return undefined
@@ -68,7 +72,6 @@ const hasReset = (limit: SessionRateLimit, now: number): boolean => {
   return ms !== undefined && ms <= 0
 }
 
-const STALE_SHORT = '○ reset'
 const STALE_LONG = 'window has reset; the new figure arrives with the next reply'
 
 const sorted = (limits: readonly SessionRateLimit[]): SessionRateLimit[] =>
@@ -129,7 +132,7 @@ export const toMeters = (limits: readonly SessionRateLimit[], now: number): Mete
     }
   })
 
-/** One compact line for the status bar, or undefined with no reading. */
+/** The terminal's line under the prompt, bars in plain text; undefined with no reading. */
 export const formatLimits = (
   limits: readonly SessionRateLimit[],
   now: number,
@@ -138,12 +141,13 @@ export const formatLimits = (
 
   return sorted(limits)
     .map(limit => {
-      if (hasReset(limit, now)) return `${labelOf(limit.kind).short} ${STALE_SHORT}`
+      const label = labelOf(limit.kind).short
+      if (hasReset(limit, now)) return `${label} ${bar(0, LONG_BAR_CELLS)} reset`
 
-      const head = `${labelOf(limit.kind).short} ${gauge(limit.percentUsed)} ${limit.percentUsed}%`
+      const head = `${label} ${bar(limit.percentUsed, LONG_BAR_CELLS)} ${limit.percentUsed}%`
       const reset = resetIn(limit, now)
 
-      return reset === undefined ? head : `${head} ↻ ${reset}`
+      return reset === undefined ? head : `${head} ↻ ${compact(reset)}`
     })
     .join(' │ ')
 }
@@ -167,5 +171,8 @@ export const formatLimitsDetail = (
     return `${label}${bar(limit.percentUsed, LONG_BAR_CELLS)}  ${limit.percentUsed}% used${tail}`
   })
 
-  return ['Usage limits', ...rows].join('\n')
+  return ['Usage limits', ...rows, '', BAND_HINT].join('\n')
 }
+
+/** The engine's `[-]` beside the band collapses it, and a plugin can neither hide nor undo that. */
+const BAND_HINT = 'Bars gone from above the prompt? Press ctrl+x, then ctrl+a, to bring them back.'
