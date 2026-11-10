@@ -10,8 +10,7 @@ See how much of your Claude plan you have used without leaving Claude Code. This
 - Bars turn **amber at 75%** and **red at 90%**.
 - The figures update as you use Claude, and the countdown refreshes every minute.
 - A new session shows your last known figures straight away, then switches to live ones after its first reply.
-- When Claude finishes a task you get a short chime and a notification you can see from any window: a Windows notification on Windows, the terminal's own notification elsewhere.
-- Type `/limits mute` to mute the chime and `/limits unmute` to turn it back on. The bell next to the bars shows which is set (🔔 on, 🔕 muted). The notification still shows, and the setting is kept for new sessions.
+- When Claude finishes a task you hear a short chime and get a notification, even while you are in another window. You can mute the chime.
 - It works in every project once installed.
 
 ## What you need
@@ -50,6 +49,25 @@ The bars appear on their own after your first reply on a new computer. After tha
 
 Type `/limits` in Claude Code for a more detailed view.
 
+### When a task finishes
+
+Each time Claude finishes replying, the plugin plays a short chime and shows a notification such as **Task finished (42s)**.
+
+- **Windows:** a Windows notification in the corner of the screen, so you see it from any window. It appears under the name *Windows PowerShell*.
+- **Mac and Linux:** your terminal's own notification, where it has one. Otherwise a small pop-up inside Claude Code.
+
+It stays quiet when you interrupt Claude yourself, and for the background helpers Claude starts during a task.
+
+### Muting the chime
+
+| Type this | What it does |
+| --- | --- |
+| `/limits mute` | Turns the chime off. The notification still shows. |
+| `/limits unmute` | Turns the chime back on. |
+| `/limits` | Shows the detailed view of your limits. |
+
+The bell at the end of the bars shows the current setting: 🔔 on, 🔕 muted. The setting is kept for new sessions.
+
 ## Update
 
 Run these on Windows or Mac:
@@ -60,6 +78,18 @@ claude plugin update usage@claude-usage-limits
 ```
 
 Then open a new Claude session.
+
+### Upgrading from version 0.1.0
+
+The plugin was renamed from `usage-limits` to `usage` in version 0.2.0, so the update command above cannot find an older install. Reinstall it once:
+
+```bash
+claude plugin uninstall usage-limits@claude-usage-limits
+claude plugin marketplace update claude-usage-limits
+claude plugin install usage@claude-usage-limits
+```
+
+Then open a new Claude session. Your last saved figures are not carried over, so the bars return after your first reply.
 
 ## Uninstall
 
@@ -74,7 +104,10 @@ claude plugin marketplace remove claude-usage-limits
 | --- | --- |
 | Nothing shows after installing | Open a new session and send one message. The first figures arrive with the first reply. |
 | The bars disappeared after pressing `[-]` | That collapses them. Press `ctrl+x`, then `ctrl+a`, to bring them back, or start a new session. |
-| A line of text instead of bars | Your version of Claude Code is not drawing the bars there. Update Claude Code. The text line shows the same figures. |
+| A line of text instead of bars in VS Code or the desktop app | Your version of Claude Code is not drawing the bars there. Update Claude Code. The text line shows the same figures. In the terminal the line under the prompt is expected. |
+| No chime when a task finishes | Check that the bell shows 🔔, not 🔕. If it is muted, type `/limits unmute`. On Windows, also check the volume of *System sounds* in the Volume Mixer. |
+| No notification on Windows | Turn off *Do not disturb*, and check that notifications are on for *Windows PowerShell* in **Settings → System → Notifications**. |
+| `/limits` says "Unknown option" | Only `/limits`, `/limits mute` and `/limits unmute` exist. |
 | `/limits` says "No usage-limit reading yet" | Send one message first. If it stays, check that you are signed in with a Pro or Max plan and not an API key. |
 | `/limits` is an unknown command | Update Claude Code, then open a new session. |
 | The install fails to download | Check that `git --version` works. If it doesn't, install Git from [git-scm.com](https://git-scm.com/downloads), open a new terminal and try again. |
@@ -82,7 +115,9 @@ claude plugin marketplace remove claude-usage-limits
 
 ## Privacy
 
-The plugin only reads the usage figures Claude Code already has. It makes no network requests of its own and does not touch your login. The last reading is saved in Claude Code's own plugin storage on your computer, so a new session has something to show.
+The plugin only reads the usage figures Claude Code already has. It makes no network requests of its own and does not touch your login. The last reading and your mute setting are saved in Claude Code's own plugin storage on your computer, so a new session has something to show.
+
+On Windows it runs PowerShell on your computer to play the chime and show the notification. It runs nothing else.
 
 ## Good to know
 
