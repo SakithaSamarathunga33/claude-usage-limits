@@ -10,6 +10,8 @@ See how much of your Claude plan you have used without leaving Claude Code. This
 - Bars turn **amber at 75%** and **red at 90%**.
 - The figures update as you use Claude, and the countdown refreshes every minute.
 - A new session shows your last known figures straight away, then switches to live ones after its first reply.
+- When Claude finishes a task you get a short chime and a notification you can see from any window: a Windows notification on Windows, the terminal's own notification elsewhere.
+- Type `/limits mute` to mute the chime and `/limits unmute` to turn it back on. The bell next to the bars shows which is set (🔔 on, 🔕 muted). The notification still shows, and the setting is kept for new sessions.
 - It works in every project once installed.
 
 ## What you need
@@ -24,14 +26,14 @@ Where you see it:
 | --- | --- |
 | VS Code extension | Progress bars above the prompt |
 | Desktop app | Progress bars above the prompt |
-| Terminal | A one-line summary: `5h ◑ 42% ↻ 2h 14m │ Week ◔ 18% ↻ 2d 3h` |
+| Terminal | A line under the prompt: `5h ▰▰▰▰▱▱▱▱▱▱ 42% ↻ 2h14m │ Week ▰▰▱▱▱▱▱▱▱▱ 18% ↻ 2d3h │ 🔔` |
 
 ## Install
 
 Run this one command in PowerShell on Windows or Terminal on Mac, or paste it to Claude and ask it to run it. There is nothing to download or clone yourself.
 
 ```bash
-claude plugin install usage-limits --marketplace SakithaSamarathunga33/claude-usage-limits
+claude plugin install usage --marketplace SakithaSamarathunga33/claude-usage-limits
 ```
 
 Then open a new Claude session. In VS Code, you can also press `Ctrl+Shift+P` (`Cmd+Shift+P` on Mac) and run **Developer: Reload Window**.
@@ -39,7 +41,7 @@ Then open a new Claude session. In VS Code, you can also press `Ctrl+Shift+P` (`
 In a terminal session of Claude Code, you can type it at the prompt instead. Answer `y` to add the marketplace, then press Enter to install it for your user account.
 
 ```text
-/plugin install usage-limits --marketplace SakithaSamarathunga33/claude-usage-limits
+/plugin install usage --marketplace SakithaSamarathunga33/claude-usage-limits
 ```
 
 ## Using it
@@ -54,7 +56,7 @@ Run these on Windows or Mac:
 
 ```bash
 claude plugin marketplace update claude-usage-limits
-claude plugin update usage-limits@claude-usage-limits
+claude plugin update usage@claude-usage-limits
 ```
 
 Then open a new Claude session.
@@ -62,7 +64,7 @@ Then open a new Claude session.
 ## Uninstall
 
 ```bash
-claude plugin uninstall usage-limits@claude-usage-limits
+claude plugin uninstall usage@claude-usage-limits
 claude plugin marketplace remove claude-usage-limits
 ```
 
@@ -71,6 +73,7 @@ claude plugin marketplace remove claude-usage-limits
 | What you see | What to do |
 | --- | --- |
 | Nothing shows after installing | Open a new session and send one message. The first figures arrive with the first reply. |
+| The bars disappeared after pressing `[-]` | That collapses them. Press `ctrl+x`, then `ctrl+a`, to bring them back, or start a new session. |
 | A line of text instead of bars | Your version of Claude Code is not drawing the bars there. Update Claude Code. The text line shows the same figures. |
 | `/limits` says "No usage-limit reading yet" | Send one message first. If it stays, check that you are signed in with a Pro or Max plan and not an API key. |
 | `/limits` is an unknown command | Update Claude Code, then open a new session. |
