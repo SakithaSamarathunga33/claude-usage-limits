@@ -3,7 +3,7 @@
 
 **Check your Claude usage and see how much of your Claude limit is left, without leaving Claude Code.** This plugin shows your **5-hour session limit** and your **weekly limit** as progress bars right above the prompt box, with a countdown to when each Claude limit resets. It works with Claude Pro and Claude Max plans in VS Code, the desktop app and the terminal.
 
-**Website:** [sakithasamarathunga33.github.io/claude-usage-limits](https://sakithasamarathunga33.github.io/claude-usage-limits/)
+**Website:** [claude-usage.sakitha.com](https://claude-usage.sakitha.com/)
 
 ![Claude usage limit progress bars in Claude Code, in dark and light themes at low, high and full usage, and the terminal line under the prompt](docs/preview.png)
 
